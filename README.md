@@ -1,1 +1,3 @@
-companion-module-tplink-kasasmartbulb
+# companion-module-tplink-kasasmartbulb
+
+See HELP.md and LICENSE

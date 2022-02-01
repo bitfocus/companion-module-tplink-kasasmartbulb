@@ -1,0 +1,24 @@
+{
+	"name": "tplink-kasasmartbulb",
+	"version": "1.0.0",
+	"api_version": "1.0",
+	"keywords": [
+		"bulb",
+		"kasa"
+	],
+	"manufacturer": "TP-Link",
+	"product": [
+		"Kasa Smart Bulb"
+	],
+	"shortname": "tplink-kasasmartbulb",
+	"description": "Companion module for TP-Link Kasa Smart Bulbs",
+	"main": "src/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "Joseph Adams <josephdadams@gmail.com>",
+	"license": "MIT",
+	"dependencies": {
+		"colorsys": "^1.0.22"
+	}
+}
