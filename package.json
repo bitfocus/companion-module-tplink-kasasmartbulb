@@ -1,7 +1,7 @@
 {
 	"name": "tplink-kasasmartbulb",
 	"version": "1.0.0",
-	"api_version": "1.0",
+	"api_version": "1.0.0",
 	"keywords": [
 		"bulb",
 		"kasa"
@@ -20,5 +20,13 @@
 	"license": "MIT",
 	"dependencies": {
 		"colorsys": "^1.0.22"
+	},
+	"homepage": "https://github.com/bitfocus/companion-module-tplink-kasasmartbulb#readme",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-tplink-kasasmartbulb/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-tplink-kasasmartbulb.git"
 	}
 }
