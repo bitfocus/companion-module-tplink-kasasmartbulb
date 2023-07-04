@@ -1,209 +1,115 @@
-const dgram = require('dgram');
-const colorsys = require('colorsys');
+const dgram = require('dgram')
+const colorsys = require('colorsys')
+const { splitRgb } = require('@companion-module/base')
+const { domainToASCII } = require('url')
 
 module.exports = {
-	// ######################
-	// #### Send Actions ####
-	// ######################
-
-	encrypt(buffer, key = 0xAB) {
-		for (let i = 0; i < buffer.length; i++) {
-			const c = buffer[i]
-			buffer[i] = c ^ key
-			key = buffer[i]
-		}
-		return buffer
-	},
-
-	decrypt (buffer, key = 0xAB) {
-		for (let i = 0; i < buffer.length; i++) {
-		  const c = buffer[i]
-		  buffer[i] = c ^ key
-		  key = c
-		}
-		return buffer
-	  },
-
-	send (i, msg) {
-		let self = i;
-		return new Promise((resolve, reject) => {
-			if (self.config.host) {	
-				const client = dgram.createSocket('udp4')
-				const message = this.encrypt(Buffer.from(JSON.stringify(msg)))
-				client.send(message, 0, message.length, 9999, self.config.host, (err, bytes) => {
-					if (err) {
-						return reject(err)
-					}
-					client.on('message', msg => {
-						let parsedJSON = {};
-						try {
-							parsedJSON = JSON.parse(this.decrypt(msg).toString());
-							resolve(parsedJSON)
-							client.close()
-						}
-						catch(error) {
-							reject(error);
-						}
-					})
-				})
-			}
-		})
-	},
-
-	// Get info about the bulb
-	async info (i) {
-		let self = i;
-
-		const r = await this.send(i, { system: { get_sysinfo: {} } })
-		return r.system.get_sysinfo
-	},
-
-	// Set power state of bulb
-	async power (i, powerState = true, transition = 0, options = {}) {
-		let self = i;
-
-		const info = await this.info(self)
-		if (typeof info.relay_state !== 'undefined') {
-			return this.send(self, {
-				system: {
-					set_relay_state: {
-					state: powerState ? 1 : 0
-					}
-				}
-			})
-		}
-		else {
-			const r = await this.send(self, {
-				'smartlife.iot.smartbulb.lightingservice': {
-					transition_light_state: {
-					ignore_default: 1,
-					on_off: powerState ? 1 : 0,
-					transition_period: transition,
-					...options
-					}
-				}
-			})
-			return r['smartlife.iot.smartbulb.lightingservice'].transition_light_state
-		}
-	},
-
-	// Set led state of bulb
-	led (i, ledState = true) {
-		let self = i;
-
-		return this.send(self, { system: { set_led_off: { off: ledState ? 0 : 1 } } })
-	},
-
-	// Set the name of bulb
-	async name (i, newAlias) {
-		let self = i;
-		const info = await this.info(i)
-		return typeof info.dev_name !== 'undefined'
-		? this.send(self, { system: { set_dev_alias: { alias: newAlias } } })
-		: this.send(self, { 'smartlife.iot.common.system': { set_dev_alias: { alias: newAlias } } })
-	},
-
-	// ##########################
-	// #### Instance Actions ####
-	// ##########################
-	setActions: function (i) {
-		var self = i
-		var actions = {}
+	setActions: function () {
+		let self = this
+		let actions = {}
 
 		// ########################
 		// #### Power Actions ####
 		// ########################
 
 		actions.powerOn = {
-			label: 'Power On',
+			name: 'Power On',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let powerValue = 1;
-				let optionsObj = {};
-				optionsObj.brightness = 100;
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
-				self.power(1, parseInt(transition), optionsObj);
-				setTimeout(self.power.bind(self), parseInt(transition), powerValue);
-			}
+			callback: async (action) => {
+				let powerValue = 1
+				let optionsObj = {}
+				// optionsObj.brightness = 100
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
+				const data = await self.power(powerValue, parseInt(transition), optionsObj)
+				// setTimeout(self.power.bind(self), parseInt(transition), powerValue)
+				self.log('debug', `action power on: data - ${JSON.stringify(data)}`)
+				self.BULBINFO.light_state.on_off = data.on_off
+				self.checkVariables()
+			},
 		}
 
 		actions.powerOff = {
-			label: 'Power Off',
+			name: 'Power Off',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let powerValue = 0;
-				let optionsObj = {};
-				optionsObj.brightness = 0;
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
-				self.power(1, parseInt(transition), optionsObj);
-				setTimeout(self.power.bind(self), parseInt(transition), powerValue);
-			}
+			callback: async function (action) {
+				let powerValue = 0
+				let optionsObj = {}
+				// optionsObj.brightness = 0
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
+				const data = await self.power(powerValue, parseInt(transition), optionsObj)
+				// setTimeout(self.power.bind(self), parseInt(transition), powerValue)
+				self.log('debug', `action power off: data - ${JSON.stringify(data)}`)
+				self.BULBINFO.light_state.on_off = data.on_off
+				self.checkVariables()
+			},
 		}
 
 		actions.powerToggle = {
-			label: 'Power Toggle',
+			name: 'Power Toggle',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let powerValue = 0;
-				let brightness = 0;
+			callback: async function (action) {
+				let powerValue = 0
+				let brightness = 0
 
 				if ('on_off' in self.BULBINFO.light_state) {
-					powerValue = self.BULBINFO.light_state.on_off;
+					powerValue = self.BULBINFO.light_state.on_off
 				}
 
 				if (powerValue === 0) {
-					powerValue = 1;
-					brightness = 100;
-				}
-				else {
-					powerValue = 0;
-					brightness = 0;
+					powerValue = 1
+					brightness = 100
+				} else {
+					powerValue = 0
+					brightness = 0
 				}
 
-				self.BULBINFO.light_state.on_off = powerValue;
+				self.BULBINFO.light_state.on_off = powerValue
 
-				let optionsObj = {};
-				optionsObj.brightness = brightness;
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
-				self.power(1, parseInt(transition), optionsObj);
-				setTimeout(self.power.bind(self), parseInt(transition), powerValue);
-			}
+				let optionsObj = {}
+				// optionsObj.brightness = brightness
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
+				const data = await self.power(powerValue, parseInt(transition), optionsObj)
+				// setTimeout(self.power.bind(self), parseInt(transition), powerValue)
+				self.log('debug', `action power toggle: data - ${JSON.stringify(data)}`)
+				self.BULBINFO.light_state.on_off = data.on_off
+				self.checkVariables()
+			},
 		}
 
 		// ########################
@@ -211,7 +117,7 @@ module.exports = {
 		// ########################
 
 		actions.brightness = {
-			label: 'Set Brightness',
+			name: 'Set Brightness',
 			options: [
 				{
 					type: 'number',
@@ -223,86 +129,94 @@ module.exports = {
 					default: self.CURRENT_BRIGHTNESS,
 					step: 1,
 					required: true,
-					range: true
+					range: true,
 				},
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let optionsObj = {};
-				optionsObj.brightness = action.options.brightness;
+			callback: async function (action) {
+				let optionsObj = {}
+				optionsObj.brightness = action.options.brightness
 
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
 
-				self.power(1, parseInt(transition), optionsObj);
-			}
+				const data = await self.power(1, parseInt(transition), optionsObj)
+				self.BULBINFO.light_state.brightness = data.brightness
+				self.checkVariables()
+			},
 		}
 
 		actions.brightnessUp = {
-			label: 'Brightness Up Continuously',
+			name: 'Brightness Up Continuously',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Increase Rate (in ms)',
 					id: 'rate',
 					default: 500,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let rate = action.options.rate;
-				self.parseVariables(rate, function (value) {
-					rate = value;
-				});
-				rate = parseInt(rate);
+			callback: async function (action) {
+				let rate = action.options.rate
+				self.parseVariablesInString(rate, function (value) {
+					rate = value
+				})
+				rate = parseInt(rate)
 
-				self.brightness_fader('up', 'start', rate);
-			}
+				self.brightness_fader('up', 'start', rate)
+				self.checkVariables()
+			},
 		}
 
 		actions.brightnessUpStop = {
-			label: 'Brightness Up Stop',
-			callback: function (action, bank) {
-				self.brightness_fader('up', 'stop', null);
-			}
+			name: 'Brightness Up Stop',
+			options: [],
+			callback: function () {
+				self.brightness_fader('up', 'stop', null)
+				self.checkVariables()
+			},
 		}
 
 		actions.brightnessDown = {
-			label: 'Brightness Down Continuously',
+			name: 'Brightness Down Continuously',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Decrease Rate (in ms)',
 					id: 'rate',
 					default: 500,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let rate = action.options.rate;
-				self.parseVariables(rate, function (value) {
-					rate = value;
-				});
-				rate = parseInt(rate);
+			callback: async function (action) {
+				let rate = action.options.rate
+				self.parseVariablesInString(rate, function (value) {
+					rate = value
+				})
+				rate = parseInt(rate)
 
-				self.brightness_fader('down', 'start', rate);
-			}
+				self.brightness_fader('down', 'start', rate)
+				self.checkVariables()
+			},
 		}
 
 		actions.brightnessDownStop = {
-			label: 'Brightness Down Stop',
-			callback: function (action, bank) {
-				self.brightness_fader('down', 'stop', null);
-			}
+			name: 'Brightness Down Stop',
+			options: [],
+			callback: async function () {
+				self.brightness_fader('down', 'stop', null)
+				self.checkVariables()
+			},
 		}
 
 		// ########################
@@ -310,176 +224,176 @@ module.exports = {
 		// ########################
 
 		actions.colorTemp = {
-			label: 'Set White Color Temperature',
+			name: 'Set White Color Temperature',
 			options: [
 				{
 					type: 'number',
 					label: 'Color Temp',
 					id: 'colortemp',
-					tooltip: 'Sets the color temperature (2500K - 6500K)',
+					tooltip: 'Sets the color temperature (2500K - 9000k)',
 					min: 2500,
-					max: 6500,
-					default: (self.CURRENT_COLORTEMP < 2500 ? 2500 : self.CURRENT_COLORTEMP),
+					max: 9000,
+					default: self.CURRENT_COLORTEMP < 2500 ? 2500 : self.CURRENT_COLORTEMP,
 					step: 5,
 					required: true,
-					range: true
+					range: true,
 				},
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let optionsObj = {};
-				optionsObj.color_temp = action.options.colortemp;
+			callback: async function (action) {
+				let optionsObj = {}
+				optionsObj.color_temp = action.options.colortemp
 
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
 
-				self.power(1, parseInt(transition), optionsObj);
-			}
+				const data = await self.power(1, parseInt(transition), optionsObj)
+				self.BULBINFO.light_state.color_temp = data.color_temp
+				self.checkVariables()
+			},
 		}
 
 		actions.colorPicker = {
-			label: 'Set To Color by Picker',
+			name: 'Set To Color by Picker',
 			options: [
 				{
 					type: 'colorpicker',
 					label: 'Color',
 					id: 'color',
-					default: self.CURRENT_COLOR_DECIMAL
+					default: self.CURRENT_COLOR_DECIMAL,
 				},
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let optionsObj = {};
+			callback: async function (action) {
+				let optionsObj = {}
 
-				let rgb = self.rgbRev(action.options.color);
-				let hsv = colorsys.rgb2Hsv(rgb.r, rgb.g, rgb.b);
+				let rgb = splitRgb(action.options.color)
+				let hsv = colorsys.rgb2Hsv(rgb.r, rgb.g, rgb.b)
 
-				optionsObj.mode = 'normal';
-				optionsObj.hue = hsv.h;
-				optionsObj.saturation = hsv.s;
-				optionsObj.color_temp = 0;
-				optionsObj.brightness = hsv.v;
+				optionsObj.mode = 'normal'
+				optionsObj.hue = hsv.h
+				optionsObj.saturation = hsv.s
+				optionsObj.color_temp = 0
+				optionsObj.brightness = hsv.v
 
-				self.CURRENT_BRIGHTNESS = hsv.v;
-				self.setVariable('brightness', hsv.v);
+				self.CURRENT_BRIGHTNESS = hsv.v
+				self.setVariableValues({ brightness: hsv.v })
 
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
-
-				self.power(1, parseInt(transition), optionsObj);
-			}
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
+				const data = await self.power(1, parseInt(transition), optionsObj)
+				self.BULBINFO.light_state = data
+				self.checkVariables()
+			},
 		}
 
 		actions.colorHsv = {
-			label: 'Set To Color by Hue, Saturation, Brightness',
+			name: 'Set To Color by Hue, Saturation, Brightness',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Hue (0 - 360)',
 					id: 'hue',
 					default: self.CURRENT_HUE,
-					required: true
+					required: true,
 				},
 				{
 					type: 'textinput',
 					label: 'Saturation (0 - 100)',
 					id: 'saturation',
 					default: self.CURRENT_SATURATION,
-					required: true
+					required: true,
 				},
 				{
 					type: 'textinput',
 					label: 'Brightness (0 - 100)',
 					id: 'brightness',
 					default: self.CURRENT_BRIGHTNESS,
-					required: true
+					required: true,
 				},
 				{
 					type: 'textinput',
 					label: 'Transition Time (in ms)',
 					id: 'transition',
 					default: 0,
-					tooltip: 'The amount of time in milliseconds'
-				}
+					tooltip: 'The amount of time in milliseconds',
+				},
 			],
-			callback: function (action, bank) {
-				let optionsObj = {};
+			callback: async (action) => {
+				let optionsObj = {}
 
-				let hue = action.options.hue;
-				self.parseVariables(hue, function (value) {
-					hue = value;
-				});
-				hue = parseInt(hue);
+				let hue = action.options.hue
+				self.parseVariablesInString(hue, function (value) {
+					hue = value
+				})
+				hue = parseInt(hue)
 				if (hue < 0) {
-					hue = 0;
-				}
-				else if (hue > 360) {
-					hue = 360;
+					hue = 0
+				} else if (hue > 360) {
+					hue = 360
 				}
 
-				let saturation = action.options.saturation;
-				self.parseVariables(saturation, function (value) {
-					saturation = value;
-				});
-				saturation = parseInt(saturation);
+				let saturation = action.options.saturation
+				self.parseVariablesInString(saturation, function (value) {
+					saturation = value
+				})
+				saturation = parseInt(saturation)
 				if (saturation < 0) {
-					saturation = 0;
+					saturation = 0
+				} else if (saturation > 100) {
+					saturation = 100
 				}
-				else if (saturation > 100) {
-					saturation = 100;
-				}				
 
-				let brightness = action.options.brightness;
-				self.parseVariables(brightness, function (value) {
-					brightness = value;
-				});
-				brightness = parseInt(brightness);
+				let brightness = action.options.brightness
+				self.parseVariablesInString(brightness, function (value) {
+					brightness = value
+				})
+				brightness = parseInt(brightness)
 				if (brightness < 0) {
-					brightness = 0;
+					brightness = 0
+				} else if (brightness > 100) {
+					brightness = 100
 				}
-				else if (brightness > 100) {
-					brightness = 100;
-				}
 
-				optionsObj.mode = 'normal';
-				optionsObj.hue = hue;
-				optionsObj.saturation = saturation;
-				optionsObj.color_temp = 0;
-				optionsObj.brightness = brightness;
-				
-				console.log(optionsObj);
+				optionsObj.mode = 'normal'
+				optionsObj.hue = hue
+				optionsObj.saturation = saturation
+				optionsObj.color_temp = 0
+				optionsObj.brightness = brightness
 
-				self.CURRENT_BRIGHTNESS = brightness;
-				self.setVariable('brightness', brightness);
+				self.CURRENT_BRIGHTNESS = brightness
+				self.setVariableValues({ brightness: brightness })
 
-				let transition = action.options.transition;
-				self.parseVariables(transition, function (value) {
-					transition = value;
-				});
-				transition = parseInt(transition);
+				let transition = action.options.transition
+				self.parseVariablesInString(transition, function (value) {
+					transition = value
+				})
+				transition = parseInt(transition)
 
-				self.power(1, parseInt(transition), optionsObj);
-			}
+				const data = await self.power(1, parseInt(transition), optionsObj)
+				self.BULBINFO.light_state = data
+				self.checkVariables()
+			},
 		}
 
-		return actions
-	}
+		self.setActionDefinitions(actions)
+	},
 }

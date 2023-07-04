@@ -2,169 +2,172 @@ module.exports = {
 	// ##########################
 	// #### Define Variables ####
 	// ##########################
-	setVariables: function (i) {
-		var self = i
-		var variables = []
+	setVariables: function () {
+		let self = this
+		let variables = []
 
-		variables.push({ name: 'sw_ver', label: 'SW Version' });
-		variables.push({ name: 'hw_ver', label: 'HW Version' });
-		variables.push({ name: 'model', label: 'Model' });
-		variables.push({ name: 'deviceId', label: 'Device ID' });
-		variables.push({ name: 'oemId', label: 'OEM ID' });
-		variables.push({ name: 'hwId', label: 'HW ID' });
-		variables.push({ name: 'rssi', label: 'RSSI' });
-		variables.push({ name: 'latitude', label: 'Latitude' });
-		variables.push({ name: 'longitude', label: 'Longitude' });
-		variables.push({ name: 'alias', label: 'Alias' });
-		variables.push({ name: 'status', label: 'Status' });
-		variables.push({ name: 'description', label: 'Description' });
-		variables.push({ name: 'mic_type', label: 'MIC Type' });
-		variables.push({ name: 'mic_mac', label: 'MIC MAC' });
-		variables.push({ name: 'dev_state', label: 'Dev State' });
-		variables.push({ name: 'is_factory', label: 'Is Factory' });
-		variables.push({ name: 'disco_ver', label: 'Disco Version' });
-		variables.push({ name: 'active_mode', label: 'Active Mode' });
-		variables.push({ name: 'is_dimmable', label: 'Is Dimmable' });
-		variables.push({ name: 'is_color', label: 'Is Color' });
-		variables.push({ name: 'is_variable_color_temp', label: 'Is Variable Color Temp' });
+		variables.push({ variableId: 'sw_ver', name: 'SW Version' })
+		variables.push({ variableId: 'hw_ver', name: 'HW Version' })
+		variables.push({ variableId: 'model', name: 'Model' })
+		variables.push({ variableId: 'deviceId', name: 'Device ID' })
+		variables.push({ variableId: 'oemId', name: 'OEM ID' })
+		variables.push({ variableId: 'hwId', name: 'HW ID' })
+		variables.push({ variableId: 'rssi', name: 'RSSI' })
+		variables.push({ variableId: 'latitude', name: 'Latitude' })
+		variables.push({ variableId: 'longitude', name: 'Longitude' })
+		variables.push({ variableId: 'alias', name: 'Alias' })
+		variables.push({ variableId: 'status', name: 'Status' })
+		variables.push({ variableId: 'description', name: 'Description' })
+		variables.push({ variableId: 'mic_type', name: 'MIC Type' })
+		variables.push({ variableId: 'mic_mac', name: 'MIC MAC' })
+		variables.push({ variableId: 'dev_state', name: 'Dev State' })
+		variables.push({ variableId: 'is_factory', name: 'Is Factory' })
+		variables.push({ variableId: 'disco_ver', name: 'Disco Version' })
+		variables.push({ variableId: 'active_mode', name: 'Active Mode' })
+		variables.push({ variableId: 'is_dimmable', name: 'Is Dimmable' })
+		variables.push({ variableId: 'is_color', name: 'Is Color' })
+		variables.push({ variableId: 'is_variable_color_temp', name: 'Is Variable Color Temp' })
 
-		variables.push({ name: 'powerState', label: 'Power State' });
-		variables.push({ name: 'mode', label: 'Mode' });
-		variables.push({ name: 'hue', label: 'Hue' });
-		variables.push({ name: 'saturation', label: 'Saturation' });
-		variables.push({ name: 'color_temp', label: 'Color Temperature' });
-		variables.push({ name: 'brightness', label: 'Brightness' });
+		variables.push({ variableId: 'powerState', name: 'Power State' })
+		variables.push({ variableId: 'mode', name: 'Mode' })
+		variables.push({ variableId: 'hue', name: 'Hue' })
+		variables.push({ variableId: 'saturation', name: 'Saturation' })
+		variables.push({ variableId: 'color_temp', name: 'Color Temperature' })
+		variables.push({ variableId: 'brightness', name: 'Brightness' })
 
-		variables.push({ name: 'color_rgb', label: 'Current Color RGB' });
-		variables.push({ name: 'color_hex', label: 'Current Color Hex' });
-		variables.push({ name: 'color_decimal', label: 'Current Color Decimal' });
-
-		return variables
+		variables.push({ variableId: 'color_rgb', name: 'Current Color RGB' })
+		variables.push({ variableId: 'color_hex', name: 'Current Color Hex' })
+		variables.push({ variableId: 'color_decimal', name: 'Current Color Decimal' })
+		self.setVariableDefinitions(variables)
 	},
 
 	// #########################
 	// #### Check Variables ####
 	// #########################
-	checkVariables: function (i) {
+	checkVariables: function () {
 		try {
-			var self = i;
-
+			var self = this
+			const variables = {}
 			if ('sw_ver' in self.BULBINFO) {
-				self.setVariable('sw_ver', self.BULBINFO.sw_ver);
+				variables['sw_ver'] =  self.BULBINFO.sw_ver
 			}
 
 			if ('hw_ver' in self.BULBINFO) {
-				self.setVariable('hw_ver', self.BULBINFO.hw_ver);
+				variables['hw_ver'] =  self.BULBINFO.hw_ver
 			}
 
 			if ('model' in self.BULBINFO) {
-				self.setVariable('model', self.BULBINFO.model);
+				variables['model'] =  self.BULBINFO.model
 			}
 
 			if ('deviceId' in self.BULBINFO) {
-				self.setVariable('deviceId', self.BULBINFO.deviceId);
+				variables['deviceId'] =  self.BULBINFO.deviceId
 			}
 
 			if ('oemId' in self.BULBINFO) {
-				self.setVariable('oemId', self.BULBINFO.oemId);
+				variables['oemId'] =  self.BULBINFO.oemId
 			}
 
 			if ('hwId' in self.BULBINFO) {
-				self.setVariable('hwId', self.BULBINFO.hwId);
+				variables['hwId'] =  self.BULBINFO.hwId
 			}
 
 			if ('rssi' in self.BULBINFO) {
-				self.setVariable('rssi', self.BULBINFO.rssi);
+				variables['rssi'] =  self.BULBINFO.rssi
 			}
 
 			if ('latitude_i' in self.BULBINFO) {
-				self.setVariable('latitude', self.BULBINFO.latitude_i);
+				variables['latitude'] =  self.BULBINFO.latitude_i
 			}
 
 			if ('longitude_i' in self.BULBINFO) {
-				self.setVariable('longitude', self.BULBINFO.longitude_i);
+				variables['longitude'] =  self.BULBINFO.longitude_i
 			}
 
 			if ('alias' in self.BULBINFO) {
-				self.setVariable('alias', self.BULBINFO.alias);
+				variables['alias'] =  self.BULBINFO.alias
 			}
 
 			if ('status' in self.BULBINFO) {
-				self.setVariable('status', self.BULBINFO.status);
+				variables['status'] =  self.BULBINFO.status
 			}
 
 			if ('description' in self.BULBINFO) {
-				self.setVariable('description', self.BULBINFO.description);
+				variables['description'] =  self.BULBINFO.description
 			}
 
 			if ('mic_type' in self.BULBINFO) {
-				self.setVariable('mic_type', self.BULBINFO.mic_type);
+				variables['mic_type'] =  self.BULBINFO.mic_type
 			}
 
 			if ('mic_mac' in self.BULBINFO) {
-				self.setVariable('mic_mac', self.BULBINFO.mic_mac);
+				variables['mic_mac'] =  self.BULBINFO.mic_mac
 			}
 
 			if ('dev_state' in self.BULBINFO) {
-				self.setVariable('dev_state', self.BULBINFO.dev_state);
+				variables['dev_state'] =  self.BULBINFO.dev_state
 			}
 
 			if ('is_factory' in self.BULBINFO) {
-				self.setVariable('is_factory', self.BULBINFO.is_factory);
+				variables['is_factory'] =  self.BULBINFO.is_factory
 			}
 
 			if ('disco_ver' in self.BULBINFO) {
-				self.setVariable('disco_ver', self.BULBINFO.disco_ver);
+				variables['disco_ver'] =  self.BULBINFO.disco_ver
 			}
 
 			if ('active_mode' in self.BULBINFO) {
-				self.setVariable('active_mode', self.BULBINFO.active_mode);
+				variables['active_mode'] =  self.BULBINFO.active_mode
 			}
 
 			if ('is_dimmable' in self.BULBINFO) {
-				self.setVariable('is_dimmable', self.BULBINFO.is_dimmable);
+				variables['is_dimmable'] =  self.BULBINFO.is_dimmable
 			}
 
 			if ('is_color' in self.BULBINFO) {
-				self.setVariable('is_color', self.BULBINFO.is_color);
+				variables['is_color'] =  self.BULBINFO.is_color
 			}
 
 			if ('is_variable_color_temp' in self.BULBINFO) {
-				self.setVariable('is_variable_color_temp', self.BULBINFO.is_variable_color_temp);
+				variables['is_variable_color_temp'] =  self.BULBINFO.is_variable_color_temp
 			}
 
 			if ('on_off' in self.BULBINFO.light_state) {
-				self.setVariable('powerState', self.BULBINFO.light_state.on_off);
+				variables['powerState'] =  self.BULBINFO.light_state.on_off
 			}
 
 			if ('mode' in self.BULBINFO.light_state) {
-				self.setVariable('mode', self.BULBINFO.light_state.mode);
+				variables['mode'] =  self.BULBINFO.light_state.mode
 			}
 
 			if ('hue' in self.BULBINFO.light_state) {
-				self.setVariable('hue', self.BULBINFO.light_state.hue);
+				variables['hue'] =  self.BULBINFO.light_state.hue
 			}
 
 			if ('saturation' in self.BULBINFO.light_state) {
-				self.setVariable('saturation', self.BULBINFO.light_state.saturation);
+				variables['saturation'] =  self.BULBINFO.light_state.saturation
 			}
 
 			if ('color_temp' in self.BULBINFO.light_state) {
-				self.setVariable('color_temp', self.BULBINFO.light_state.color_temp);
+				variables['color_temp'] =  self.BULBINFO.light_state.color_temp
 			}
 
 			if ('brightness' in self.BULBINFO.light_state) {
-				self.setVariable('brightness', self.BULBINFO.light_state.brightness);
+				variables['brightness'] =  self.BULBINFO.light_state.brightness
 			}
 
-			self.setVariable('color_rgb', self.CURRENT_COLOR_RGB.r + ',' + self.CURRENT_COLOR_RGB.g + ',' + self.CURRENT_COLOR_RGB.b);
-			self.setVariable('color_hex', self.CURRENT_COLOR_HEX);
-			self.setVariable('color_decimal', self.CURRENT_COLOR_DECIMAL);
-		}
-		catch(error) {
-			if (String(error).indexOf('Cannot use \'in\' operator to search') === -1) {
-				self.log('error', 'Error from Bulb: ' + String(error));
+			variables['color_rgb'] =  self.CURRENT_COLOR_RGB.r + ',' + self.CURRENT_COLOR_RGB.g + ',' + self.CURRENT_COLOR_RGB.b
+			
+			variables['color_hex'] =  self.CURRENT_COLOR_HEX
+			variables['color_decimal'] =  self.CURRENT_COLOR_DECIMAL
+		
+			this.setVariableValues(variables)
+			this.checkFeedbacks('color', 'powerState')
+		} catch (error) {
+			self.log('error', error)
+			if (String(error).indexOf("Cannot use 'in' operator to search") === -1) {
+				self.log('error', 'Error from Bulb: ' + String(error))
 			}
 		}
-	}
+	},
 }
