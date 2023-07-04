@@ -1,21 +1,22 @@
-const colorsys = require('colorsys');
+const colorsys = require('colorsys')
+const { combineRgb } = require('@companion-module/base')
 
 module.exports = {
 	// ##########################
 	// #### Define Feedbacks ####
 	// ##########################
-	setFeedbacks: function (i) {
-		var self = i
-		var feedbacks = {}
+	setFeedbacks: function () {
+		let self = this
+		let feedbacks = {}
 
-		const foregroundColor = self.rgb(255, 255, 255) // White
-		const backgroundColorRed = self.rgb(255, 0, 0) // Red
-		const backgroundColorGreen = self.rgb(0, 255, 0) // Green
-		const backgroundColorOrange = self.rgb(255, 102, 0) // Orange
+		const foregroundColor = combineRgb(255, 255, 255) // White
+		const backgroundColorRed = combineRgb(255, 0, 0) // Red
+		const backgroundColorGreen = combineRgb(0, 255, 0) // Green
+		const backgroundColorOrange = combineRgb(255, 102, 0) // Orange
 
 		feedbacks.powerState = {
 			type: 'boolean',
-			label: 'Power State',
+			name: 'Power State',
 			description: 'Indicate if Bulb is On or Off',
 			style: {
 				color: foregroundColor,
@@ -33,33 +34,48 @@ module.exports = {
 					],
 				},
 			],
-			callback: function (feedback, bank) {
+			callback: function (feedback) {
 				var opt = feedback.options
+				
 				if (self.BULBINFO.light_state) {
 					if (self.BULBINFO.light_state.on_off === opt.option) {
-						return true;
+						return true
 					}
 				}
 
 				return false
-			}
+			},
 		}
 
 		feedbacks.color = {
 			type: 'advanced',
-			label: 'Show Bulb Color',
+			name: 'Show Bulb Color',
 			description: 'Show the current bulb color on the button',
-			callback: function (feedback, bank) {
-				var opt = feedback.options
-				if ('hue"' in self.BULBINFO.light_state) {
-					let rgb = colorsys.hsv2Rgb(self.BULBINFO.light_state.hue, self.BULBINFO.light_state.saturation, self.BULBINFO.light_state.brightness)
-					return { bgcolor: self.rgb(rgb.r, rgb.g, rgb.b) }
+			options: [],
+			callback: function () {
+				if (
+					self.BULBINFO.light_state !== undefined &&
+					self.BULBINFO.light_state.hue !== undefined &&
+					self.BULBINFO.light_state.hue !== null &&
+					self.BULBINFO.light_state.saturation !== undefined &&
+					self.BULBINFO.light_state.saturation !== null &&
+					self.BULBINFO.light_state.brightness !== undefined &&
+					self.BULBINFO.light_state.brightness !== null
+				) {
+					
+					let rgb = colorsys.hsv2Rgb(
+						self.BULBINFO.light_state.hue,
+						self.BULBINFO.light_state.saturation,
+						self.BULBINFO.light_state.brightness
+					)
+
+					return { bgcolor: combineRgb(rgb.r, rgb.g, rgb.b) }
 				}
 
 				return false
-			}
+			},
 		}
 
-		return feedbacks
-	}
+		self.setFeedbackDefinitions(feedbacks)
+	},
 }

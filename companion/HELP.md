@@ -7,7 +7,7 @@ Actions:
 * Power On/Off/Toggle
 * Set Brightness (0-100)
 * Brightness Up/Down
-* Set to White Color Temp (2500K - 6500K)
+* Set to White Color Temp (2500K - 9000k)
 * Set to Color
 
 Variables:

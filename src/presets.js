@@ -1,274 +1,341 @@
+const { combineRgb } = require('@companion-module/base')
 module.exports = {
-	setPresets: function (i) {
-		var self = i
-		var presets = []
+	setPresets: function () {
+		let self = this
+		let presets = []
 
-		const foregroundColor = self.rgb(255, 255, 255) // White
-		const backgroundColorRed = self.rgb(255, 0, 0) // Red
-		const backgroundColorGreen = self.rgb(0, 255, 0) // Green
-		const backgroundColorOrange = self.rgb(255, 102, 0) // Orange
+		const colorWhite = combineRgb(255, 255, 255) // White
+		const colorBlack = combineRgb(0, 0, 0) // black
+		const colorRed = combineRgb(255, 0, 0) // Red
+		const colorGreen = combineRgb(0, 255, 0) // Green
+		const colorOrange = combineRgb(255, 102, 0) // Orange
 
 		// ########################
 		// #### Power Presets ####
 		// ########################
 
 		presets.push({
+			type: 'button',
 			category: 'Power',
-			label: 'Power On',
-			bank: {
-				style: 'text',
+			name: 'Power On',
+			style: {
 				text: 'Power\\nON',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 0, 0),
+				color: colorWhite,
+				bgcolor: colorRed,
 			},
-			actions: [
+			steps: [
 				{
-					action: 'powerOn',
-					options: {
-						transition: 1000
-					}
-				}
+					down: [
+						{
+							actionId: 'powerOn',
+							options: {
+								transition: 1000,
+							},
+						},
+					],
+					up: []
+				},
 			],
 			feedbacks: [
 				{
-					type: 'powerState',
+					feedbackId: 'powerState',
 					options: {
-						option: 1
+						option: 1,
 					},
 					style: {
-						color: foregroundColor,
-						bgcolor: backgroundColorRed
-					}
-				}
-			]
+						color: colorBlack,
+						bgcolor: colorGreen,
+					},
+				},
+			],
 		})
 
 		presets.push({
+			type: 'button',
 			category: 'Power',
-			label: 'Power Off',
-			bank: {
-				style: 'text',
+			name: 'Power Off',
+			style: {
 				text: 'Power\\nOFF',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 0, 0),
+				color: colorBlack,
+				bgcolor: colorGreen,
 			},
-			actions: [
+			steps: [
 				{
-					action: 'powerOff',
-					options: {
-						transition: 1000
-					}
-				}
+					down: [
+						{
+							actionId: 'powerOff',
+							options: {
+								transition: 1000,
+							},
+						},
+					],
+					up: [],
+				},
 			],
 			feedbacks: [
 				{
-					type: 'powerState',
+					feedbackId: 'powerState',
 					options: {
-						option: 0
+						option: 0,
 					},
 					style: {
-						color: foregroundColor,
-						bgcolor: backgroundColorRed
-					}
-				}
-			]
+						color: colorWhite,
+						bgcolor: colorRed,
+					},
+				},
+			],
 		})
 
 		presets.push({
+			type: 'button',
 			category: 'Power',
-			label: 'Power Toggle',
-			bank: {
-				style: 'text',
+			name: 'Power Toggle',
+			style: {
 				text: 'Power\\nTOGGLE',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 0, 0),
+				color: colorWhite,
+				bgcolor: colorBlack,
 			},
-			actions: [
+			steps: [
 				{
-					action: 'powerToggle',
-					options: {
-						transition: 1000
-					}
-				}
+					down: [
+						{
+							actionId: 'powerToggle',
+							options: {
+								transition: 1000,
+							},
+						},
+					],
+					up: [],
+				},
 			],
 			feedbacks: [
 				{
-					type: 'powerState',
+					feedbackId: 'powerState',
 					options: {
-						option: 1
+						option: 1,
 					},
 					style: {
-						color: foregroundColor,
-						bgcolor: backgroundColorRed
-					}
-				}
-			]
+						color: colorBlack,
+						bgcolor: colorGreen,
+					},
+				},
+				{
+					feedbackId: 'powerState',
+					options: {
+						option: 0,
+					},
+					style: {
+						color: colorWhite,
+						bgcolor: colorRed,
+					},
+				},
+			],
 		})
 
 		presets.push({
+			type: 'button',
 			category: 'Brightness',
-			label: 'Brightness Up',
-			bank: {
-				style: 'text',
+			name: 'Brightness Up',
+			style: {
 				text: 'Brightness Up',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 0, 0),
+				color: colorWhite,
+				bgcolor: colorBlack,
 			},
-			actions: [
+			steps: [
 				{
-					action: 'brightnessUp',
-					options: {
-						rate: 50
-					}
-				}
+					down: [
+						{
+							actionId: 'brightnessUp',
+							options: {
+								rate: 50,
+							},
+						},
+					],
+					up: [
+						{
+							actionId: 'brightnessUpStop',
+						},
+					],
+				},
 			],
-			release_actions: [
-				{
-					action: 'brightnessUpStop'
-				}
-			]
+			feedbacks: []
 		})
 
 		presets.push({
+			type: 'button',
 			category: 'Brightness',
-			label: 'Brightness Down',
-			bank: {
-				style: 'text',
+			name: 'Brightness Down',
+			style: {
 				text: 'Brightness Down',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 0, 0),
+				color: colorWhite,
+				bgcolor: colorBlack,
 			},
-			actions: [
+			steps: [
 				{
-					action: 'brightnessDown',
-					options: {
-						rate: 50
-					}
-				}
+					down: [
+						{
+							actionId: 'brightnessDown',
+							options: {
+								rate: 50,
+							},
+						},
+					],
+					up: [
+						{
+							actionId: 'brightnessDownStop',
+						},
+					],
+				},
 			],
-			release_actions: [
-				{
-					action: 'brightnessDownStop'
-				}
-			]
+			feedbacks: []
 		})
 
 		for (let i = 10; i <= 100; i = i + 10) {
 			presets.push({
+				type: 'button',
 				category: 'Brightness',
-				label: 'Brightness ' + i + '%',
-				bank: {
-					style: 'text',
+				name: 'Brightness ' + i + '%',
+				style: {
 					text: i + '%',
 					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
+					color: colorWhite,
+					bgcolor: colorBlack,
 				},
-				actions: [
+				steps: [
 					{
-						action: 'brightness',
-						options: {
-							brightness: i,
-							transition: 0
-						}
-					}
-				]
+						down: [
+							{
+								actionId: 'brightness',
+								options: {
+									brightness: i,
+									transition: 0,
+								},
+							},
+						],
+						up: [],
+					},
+				],
+				feedbacks: [],
 			})
 		}
 
-		let PRESETS_COLORTEMPS = [2700, 3000, 3200, 3400, 4000, 5000, 6000];
+		let PRESETS_COLORTEMPS = [2700, 3000, 3200, 3400, 4000, 5000, 6000]
 
 		for (let i = 0; i < PRESETS_COLORTEMPS.length; i++) {
 			presets.push({
+				type: 'button',
 				category: 'Color Temperature',
-				label: 'Color Temp ' + PRESETS_COLORTEMPS[i] + 'K',
-				bank: {
-					style: 'text',
+				name: 'Color Temp ' + PRESETS_COLORTEMPS[i] + 'K',
+				style: {
 					text: PRESETS_COLORTEMPS[i] + 'K',
 					size: '18',
-					color: '16777215',
-					bgcolor: self.rgb(0, 0, 0),
+					color: colorWhite,
+					bgcolor: colorBlack,
 				},
-				actions: [
+				steps: [
 					{
-						action: 'colorTemp',
-						options: {
-							colortemp: PRESETS_COLORTEMPS[i],
-							transition: 0
-						}
-					}
-				]
+						down: [
+							{
+								actionId: 'colorTemp',
+								options: {
+									colortemp: PRESETS_COLORTEMPS[i],
+									transition: 0,
+								},
+							},
+						],
+						up: [],
+					},
+				],
+				feedbacks: [],
 			})
 		}
 
 		presets.push({
+			type: 'button',
 			category: 'Set Colors',
-			label: 'Red',
-			bank: {
-				style: 'text',
+			name: 'Red',
+			style: {
 				text: '',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(255, 0, 0),
+				color: colorWhite,
+				bgcolor: combineRgb(255, 0, 0),
 			},
-			actions: [
+			steps: [
 				{
-					action: 'colorPicker',
-					options: {
-						color: self.rgb(255, 0, 0),
-						transition: 0
-					}
-				}
-			]
+					down: [
+						{
+							actionId: 'colorPicker',
+							options: {
+								color: combineRgb(255, 0, 0),
+								transition: 0,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
 		})
 
 		presets.push({
+			type: 'button',
 			category: 'Set Colors',
-			label: 'Green',
-			bank: {
-				style: 'text',
+			name: 'Green',
+			style: {
 				text: '',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 255, 0),
+				color: colorWhite,
+				bgcolor: combineRgb(0, 255, 0),
 			},
-			actions: [
+			steps: [
 				{
-					action: 'colorPicker',
-					options: {
-						color: self.rgb(0, 255, 0),
-						transition: 0
-					}
-				}
-			]
+					down: [
+						{
+							actionId: 'colorPicker',
+							options: {
+								color: combineRgb(0, 255, 0),
+								transition: 0,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
 		})
 
 		presets.push({
+			type: 'button',
 			category: 'Set Colors',
-			label: 'Blue',
-			bank: {
-				style: 'text',
+			name: 'Blue',
+			style: {
 				text: '',
 				size: '18',
-				color: '16777215',
-				bgcolor: self.rgb(0, 0, 255),
+				color: colorWhite,
+				bgcolor: combineRgb(0, 0, 255),
 			},
-			actions: [
+			steps: [
 				{
-					action: 'colorPicker',
-					options: {
-						color: self.rgb(0, 0, 255),
-						transition: 0
-					}
-				}
-			]
+					down: [
+						{
+							actionId: 'colorPicker',
+							options: {
+								color: combineRgb(0, 0, 255),
+								transition: 0,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
 		})
 
-		return presets
-	}
+		this.setPresetDefinitions(presets)
+	},
 }
