@@ -1,14 +1,16 @@
 const { InstanceStatus } = require('@companion-module/base')
 const colorsys = require('colorsys')
 const dgram = require('dgram')
+const { clearIntervalAsync, setIntervalAsync } = require('set-interval-async')
 
 module.exports = {
 	getInformation: async function () {
 		//Get all information from Device
 		var self = this
-
+		self.log('debug', 'getInformation')
 		if (self.config.host) {
 			let info = await this.info()
+			// this.log('debug', `getInformation: info - ${JSON.stringify(info)}`)
 			if (info) {
 				this.updateStatus(InstanceStatus.Ok)
 				self.BULBINFO = info
@@ -17,7 +19,7 @@ module.exports = {
 				} catch (error) {
 					self.log('error', 'Error from Bulb: ' + String(error))
 					self.log('error', 'Stopping Update interval due to error.')
-					self.stopInterval()
+					await self.stopInterval()
 				}
 
 				try {
@@ -25,7 +27,7 @@ module.exports = {
 				} catch (error) {
 					self.log('error', 'Error from Bulb: ' + String(error))
 					self.log('error', 'Stopping Update interval due to error.')
-					self.stopInterval()
+					await self.stopInterval()
 				}
 
 				try {
@@ -33,72 +35,77 @@ module.exports = {
 				} catch (error) {
 					self.log('error', 'Error from Bulb: ' + String(error))
 					self.log('error', 'Stopping Update interval due to error.')
-					self.stopInterval()
+					await self.stopInterval()
 				}
 			}
 		}
 	},
-	setupInterval: function () {
+	setupInterval: async function () {
 		let self = this
 
 		if (self.INTERVAL !== null) {
-			self.stopInterval()
+			await self.stopInterval()
 		}
 
 		self.config.interval = parseInt(self.config.interval)
 
 		if (self.config.interval > 0) {
 			self.log('info', 'Starting Update Interval.')
-			self.INTERVAL = setInterval(self.getInformation.bind(self), self.config.interval)
+			self.INTERVAL = setIntervalAsync(async () => {
+				await self.getInformation(self)
+			}, self.config.interval)
 		}
 	},
-	stopInterval: function () {
+	stopInterval: async function () {
 		let self = this
 
 		self.log('info', 'Stopping Update Interval.')
 
 		if (self.INTERVAL) {
-			clearInterval(self.INTERVAL)
+			await clearIntervalAsync(self.INTERVAL)
 			self.INTERVAL = null
 		}
 	},
-	brightness_change: async function (direction) {
+	brightness_change: async function(direction) {
 		let self = this
-
+		self.log('debug', `brightness going: ${direction}`)
 		let newLevel = self.CURRENT_BRIGHTNESS
-
 		if (direction === 'up') {
 			newLevel++
 		} else {
 			newLevel--
 		}
-
+		self.log('debug', `brightness going from ${self.CURRENT_BRIGHTNESS}  to ${newLevel}`)
 		if (newLevel > 100 || newLevel < 0) {
-			self.brightness_fader(direction, 'stop', null)
+			await self.brightness_fader(direction, 'stop', null)
 		} else {
-			const data = await self.power(1, 0, { brightness: newLevel })
-			self.BULBINFO.light_state.brightness = data.brightness
+			await self.power(1, 0, { brightness: newLevel })	
 			self.CURRENT_BRIGHTNESS = newLevel
-			self.setVariableValues({ brightness: newLevel })
+			self.setVariableValues({ brightness: newLevel })		
 		}
 	},
 	brightness_fader: async function (direction, mode, rate) {
 		let self = this
+		self.log('debug', `brightness_fader: direction  - ${direction}, mode - ${mode}, rate - ${rate}`)
 
-		self.brightness_fader_stop()
+		await self.brightness_fader_stop()
 
 		if (mode === 'start') {
-			self.stopInterval() //stop the regular update interval as it will mess with the brightness otherwise
-			self.BRIGHTNESS_INTERVAL = setInterval(self.brightness_change.bind(self), parseInt(rate), direction)
+			await self.stopInterval() //stop the regular update interval as it will mess with the brightness otherwise
+			await self.getInformation()
+			self.BRIGHTNESS_INTERVAL = setIntervalAsync(async () => {
+				await self.brightness_change(direction)
+			}, rate)
 		} else {
-			self.setupInterval() //restart regular update interval if needed
+			await self.getInformation()
+			await self.setupInterval() //restart regular update interval if needed
 		}
 	},
 	brightness_fader_stop: async function () {
 		let self = this
 
 		if (self.BRIGHTNESS_INTERVAL !== null) {
-			clearInterval(self.BRIGHTNESS_INTERVAL)
+			await clearIntervalAsync(this.BRIGHTNESS_INTERVAL)
 			self.BRIGHTNESS_INTERVAL = null
 		}
 	},
@@ -161,26 +168,32 @@ module.exports = {
 		return buffer
 	},
 
-	send(msg) {
+	async send(msg) {
 		let self = this
 		return new Promise((resolve, reject) => {
 			if (self.config.host) {
 				const client = dgram.createSocket('udp4')
 				const message = self.encrypt(Buffer.from(JSON.stringify(msg)))
-				client.send(message, 0, message.length, 9999, self.config.host, (err, bytes) => {
-					if (err) {
-						return reject(err)
+				client.on('message', (msg) => {
+					let parsedJSON = {}
+					try {
+						parsedJSON = JSON.parse(self.decrypt(msg).toString())
+						resolve(parsedJSON)
+						client.close()
+					} catch (error) {
+						reject(error)
+						client.close()
 					}
-					client.on('message', (msg) => {
-						let parsedJSON = {}
-						try {
-							parsedJSON = JSON.parse(self.decrypt(msg).toString())
-							resolve(parsedJSON)
-							client.close()
-						} catch (error) {
-							reject(error)
-						}
-					})
+				})
+				client.on('error', (err) => {
+					this.updateStatus(InstanceStatus.ConnectionFailure, err.message)
+					this.log('error', 'Network error: ' + err.message)
+				})
+				client.send(message, 0, message.length, 9999, self.config.host, (err) => {
+					if (err) {
+						reject(err)
+						client.close()
+					}
 				})
 			}
 		})
@@ -220,13 +233,6 @@ module.exports = {
 			return r['smartlife.iot.smartbulb.lightingservice'].transition_light_state
 		}
 	},
-
-	// Set led state of bulb
-	// async led(ledState = true) {
-	// 	let self = this
-
-	// 	return await self.send({ system: { set_led_off: { off: ledState ? 0 : 1 } } })
-	// },
 
 	// Set the name of bulb
 	async name(newAlias) {

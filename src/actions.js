@@ -1,7 +1,5 @@
-const dgram = require('dgram')
 const colorsys = require('colorsys')
 const { splitRgb } = require('@companion-module/base')
-const { domainToASCII } = require('url')
 
 module.exports = {
 	setActions: function () {
@@ -24,17 +22,12 @@ module.exports = {
 				},
 			],
 			callback: async (action) => {
-				let powerValue = 1
-				let optionsObj = {}
-				// optionsObj.brightness = 100
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
-				const data = await self.power(powerValue, parseInt(transition), optionsObj)
-				// setTimeout(self.power.bind(self), parseInt(transition), powerValue)
-				self.log('debug', `action power on: data - ${JSON.stringify(data)}`)
+				const powerValue = 1
+				const optionsObj = {}
+				const transition = parseInt(await self.parseVariablesInString(action.options.transition))
+				
+				const data = await self.power(powerValue, transition, optionsObj)
+				// self.log('debug', `action power on: data - ${JSON.stringify(data)}`)
 				self.BULBINFO.light_state.on_off = data.on_off
 				self.checkVariables()
 			},
@@ -52,17 +45,12 @@ module.exports = {
 				},
 			],
 			callback: async function (action) {
-				let powerValue = 0
-				let optionsObj = {}
-				// optionsObj.brightness = 0
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
-				const data = await self.power(powerValue, parseInt(transition), optionsObj)
-				// setTimeout(self.power.bind(self), parseInt(transition), powerValue)
-				self.log('debug', `action power off: data - ${JSON.stringify(data)}`)
+				const powerValue = 0
+				const optionsObj = {}
+				const transition = parseInt(await self.parseVariablesInString(action.options.transition))
+				
+				const data = await self.power(powerValue, transition, optionsObj)
+				// self.log('debug', `action power off: data - ${JSON.stringify(data)}`)
 				self.BULBINFO.light_state.on_off = data.on_off
 				self.checkVariables()
 			},
@@ -81,7 +69,6 @@ module.exports = {
 			],
 			callback: async function (action) {
 				let powerValue = 0
-				let brightness = 0
 
 				if ('on_off' in self.BULBINFO.light_state) {
 					powerValue = self.BULBINFO.light_state.on_off
@@ -89,25 +76,17 @@ module.exports = {
 
 				if (powerValue === 0) {
 					powerValue = 1
-					brightness = 100
 				} else {
 					powerValue = 0
-					brightness = 0
 				}
 
 				self.BULBINFO.light_state.on_off = powerValue
 
-				let optionsObj = {}
-				// optionsObj.brightness = brightness
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
-				const data = await self.power(powerValue, parseInt(transition), optionsObj)
-				// setTimeout(self.power.bind(self), parseInt(transition), powerValue)
-				self.log('debug', `action power toggle: data - ${JSON.stringify(data)}`)
-				self.BULBINFO.light_state.on_off = data.on_off
+				const optionsObj = {}
+				const transition = parseInt(await self.parseVariablesInString(action.options.transition))
+				
+				const data = await self.power(powerValue, transition, optionsObj)
+				// self.log('debug', `action power toggle: data - ${JSON.stringify(data)}`)
 				self.checkVariables()
 			},
 		}
@@ -140,16 +119,13 @@ module.exports = {
 				},
 			],
 			callback: async function (action) {
-				let optionsObj = {}
-				optionsObj.brightness = action.options.brightness
+				let optionsObj = {
+					brightness: action.options.brightness
+				}
 
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
+				let transition = parseInt(await self.parseVariablesInString(action.options.transition))
 
-				const data = await self.power(1, parseInt(transition), optionsObj)
+				const data = await self.power(1, transition, optionsObj)
 				self.BULBINFO.light_state.brightness = data.brightness
 				self.checkVariables()
 			},
@@ -167,13 +143,9 @@ module.exports = {
 				},
 			],
 			callback: async function (action) {
-				let rate = action.options.rate
-				self.parseVariablesInString(rate, function (value) {
-					rate = value
-				})
-				rate = parseInt(rate)
+				let rate = parseInt(await self.parseVariablesInString(action.options.rate))
 
-				self.brightness_fader('up', 'start', rate)
+				await self.brightness_fader('up', 'start', rate)
 				self.checkVariables()
 			},
 		}
@@ -181,8 +153,8 @@ module.exports = {
 		actions.brightnessUpStop = {
 			name: 'Brightness Up Stop',
 			options: [],
-			callback: function () {
-				self.brightness_fader('up', 'stop', null)
+			callback: async function () {
+				await self.brightness_fader('up', 'stop', null)
 				self.checkVariables()
 			},
 		}
@@ -199,13 +171,9 @@ module.exports = {
 				},
 			],
 			callback: async function (action) {
-				let rate = action.options.rate
-				self.parseVariablesInString(rate, function (value) {
-					rate = value
-				})
-				rate = parseInt(rate)
-
-				self.brightness_fader('down', 'start', rate)
+				let rate = parseInt(await self.parseVariablesInString(action.options.rate))
+				
+				await self.brightness_fader('down', 'start', rate)
 				self.checkVariables()
 			},
 		}
@@ -214,7 +182,7 @@ module.exports = {
 			name: 'Brightness Down Stop',
 			options: [],
 			callback: async function () {
-				self.brightness_fader('down', 'stop', null)
+				await self.brightness_fader('down', 'stop', null)
 				self.checkVariables()
 			},
 		}
@@ -247,16 +215,13 @@ module.exports = {
 				},
 			],
 			callback: async function (action) {
-				let optionsObj = {}
-				optionsObj.color_temp = action.options.colortemp
+				let optionsObj = {
+					color_temp: action.options.colortemp,
+				}
 
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
-
-				const data = await self.power(1, parseInt(transition), optionsObj)
+				let transition = parseInt(await self.parseVariablesInString(action.options.transition))
+				
+				const data = await self.power(1, transition, optionsObj)
 				self.BULBINFO.light_state.color_temp = data.color_temp
 				self.checkVariables()
 			},
@@ -280,26 +245,23 @@ module.exports = {
 				},
 			],
 			callback: async function (action) {
-				let optionsObj = {}
-
 				let rgb = splitRgb(action.options.color)
 				let hsv = colorsys.rgb2Hsv(rgb.r, rgb.g, rgb.b)
 
-				optionsObj.mode = 'normal'
-				optionsObj.hue = hsv.h
-				optionsObj.saturation = hsv.s
-				optionsObj.color_temp = 0
-				optionsObj.brightness = hsv.v
+				const optionsObj = {
+					mode: 'normal',
+					hue: hsv.h,
+					saturation: hsv.s,
+					color_temp: 0,
+					brightness: hsv.v
+				}
 
-				self.CURRENT_BRIGHTNESS = hsv.v
-				self.setVariableValues({ brightness: hsv.v })
+				self.CURRENT_BRIGHTNESS = optionsObj.brightness
+				self.setVariableValues({ brightness: optionsObj.brightness})
 
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
-				const data = await self.power(1, parseInt(transition), optionsObj)
+				let transition = parseInt(await self.parseVariablesInString(action.options.transition))
+				
+				const data = await self.power(1, transition, optionsObj)
 				self.BULBINFO.light_state = data
 				self.checkVariables()
 			},
@@ -338,57 +300,45 @@ module.exports = {
 				},
 			],
 			callback: async (action) => {
-				let optionsObj = {}
-
-				let hue = action.options.hue
-				self.parseVariablesInString(hue, function (value) {
-					hue = value
-				})
-				hue = parseInt(hue)
+				let hue = parseInt(await self.parseVariablesInString(action.options.hue))
+				
 				if (hue < 0) {
 					hue = 0
 				} else if (hue > 360) {
 					hue = 360
 				}
 
-				let saturation = action.options.saturation
-				self.parseVariablesInString(saturation, function (value) {
-					saturation = value
-				})
-				saturation = parseInt(saturation)
+				let saturation = parseInt(await self.parseVariablesInString(action.options.saturation))
+				
 				if (saturation < 0) {
 					saturation = 0
 				} else if (saturation > 100) {
 					saturation = 100
 				}
 
-				let brightness = action.options.brightness
-				self.parseVariablesInString(brightness, function (value) {
-					brightness = value
-				})
-				brightness = parseInt(brightness)
+				let brightness = parseInt(await self.parseVariablesInString(action.options.brightness))
+				
 				if (brightness < 0) {
 					brightness = 0
 				} else if (brightness > 100) {
 					brightness = 100
 				}
 
-				optionsObj.mode = 'normal'
-				optionsObj.hue = hue
-				optionsObj.saturation = saturation
-				optionsObj.color_temp = 0
-				optionsObj.brightness = brightness
+				const optionsObj = {
+					mode: 'normal',
+					hue: hue,
+					saturation: saturation,
+					color_temp: 0,
+					brightness: brightness,
+				}
+
 
 				self.CURRENT_BRIGHTNESS = brightness
 				self.setVariableValues({ brightness: brightness })
 
-				let transition = action.options.transition
-				self.parseVariablesInString(transition, function (value) {
-					transition = value
-				})
-				transition = parseInt(transition)
+				let transition = parseInt(await self.parseVariablesInString(action.options.transition))
 
-				const data = await self.power(1, parseInt(transition), optionsObj)
+				const data = await self.power(1, transition, optionsObj)
 				self.BULBINFO.light_state = data
 				self.checkVariables()
 			},

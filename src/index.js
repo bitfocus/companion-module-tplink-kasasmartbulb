@@ -47,8 +47,8 @@ class KasaBulbInstance extends InstanceBase {
 
 	async destroy() {
 		this.log('info', 'destroying')
-		this.stopInterval()
-		this.brightness_fader_stop()
+		await this.stopInterval()
+		await this.brightness_fader_stop()
 		this.log('debug', 'destroyed')
 	}
 
@@ -64,8 +64,8 @@ class KasaBulbInstance extends InstanceBase {
 			}
 		}
 
-		this.getInformation()
-		this.setupInterval()
+		await this.getInformation()
+		await this.setupInterval()
 		this.setActions()
 		this.setPresets()
 		this.setVariables()
