@@ -55,11 +55,13 @@ module.exports = {
 					'Please enter the amount of time in milliseconds to request new information from the bulb. Set to 0 to disable.',
 			},
 			{
-				type: 'textinput',
+				type: 'number',
 				id: 'interval',
 				label: 'Update Interval',
 				width: 3,
 				default: 0,
+				min: 0,
+				max: 9999999
 			},
 		]
 	}
