@@ -3,7 +3,7 @@
 	"name": "tplink-kasasmartbulb",
 	"shortname": "tplink-kasasmartbulb",
 	"description": "Companion module for TP-Link Kasa Smart Bulbs",
-	"version": "2.0.0",
+	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-tplink-kasasmartbulb.git",
 	"bugs": "https://github.com/bitfocus/companion-module-tplink-kasasmartbulb/issues",
